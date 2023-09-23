@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Presentation</title>
+        <meta charset="utf-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;1,400&display=swap" rel="stylesheet">
+    </head>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Montserrat:700');
+
+        body, html {
+            margin:0;
+            padding: 0;
+            
+        }
+        body::-webkit-scrollbar {
+    display: none;
+}
+
+        #display_view_container {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+        #display_view {
+            height: 100%;
+        }
+        #display_view_overlay {
+            position: absolute;
+            top: 5px;
+            right: 0;
+            background: #ccc;
+            padding: 5px;
+            opacity: 0.9;
+            border-radius: 5px;
+            font-size: 0.6em;
+        }
+
+        #display_view_overlay p {
+            font-size: 14px;
+            color: black;
+            font-weight: bold;
+        }
+
+
+        .column-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-center {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cover-page {
+            width: 100%;
+            height: 100%;
+            font-family: 'Roboto';
+            font-weight: 400;
+            font-size: 2em;
+        }
+
+        .slide-line {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 600;
+            text-wrap: nowrap;
+        }
+
+    </style>
+    <body>
+        <div class="column-container">
+            <input type="file" id="file-input" />
+    <!--    <textarea id="slg_source"></textarea> -->
+
+        <div id="display_view_container">
+            <div id="display_view_overlay">
+                <p id="page_indicator" style="margin:0">Page 1 of 2</p>
+            </div>
+        <div id="display_view"></div></div>
+        
+        </div>
+        <script type="text/javascript" src="./script.js">
+        </script>
+    </body>
+</html>
