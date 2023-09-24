@@ -129,18 +129,7 @@ document.addEventListener('DOMContentLoaded', function(e){
    // slide.add(new CoverPage({title:"Harpa 204", author:"Harpa"}));
     slide.add(new BlackPage());
 
-    const keyTable = {
-        'ArrowLeft' :()=> slide.previousSlide(),
-        'ArrowRight' :()=> slide.nextSlide(),
-        'KeyV': ()=> {
-            themes[(++themeIndex)%themes.length].apply($("#display_view_container"));
-        }
-    };
 
-    document.addEventListener('keydown', function(e){
-        console.log(e);
-        (keyTable[e.code] ?? function(){})();
-    }, false);
 
     $("#display_view").appendChild($$('div'));
 
@@ -154,20 +143,27 @@ document.addEventListener('DOMContentLoaded', function(e){
         return vertical || horizontal;
     }
 
+    const adjustSizeToFit = function() {
+        var size = 52;
+        const bodyEl = $("#display_view_container");
+        bodyEl.style['font-size'] = '1.2em';
+        while(detectOverflow()) {
+            size--;
+            bodyEl.style['font-size'] = `${size}px`;
+        }
+    }
+
+    const setCurrentTheme = function() {
+        themes[themeIndex % themes.length].apply($("#display_view_container"));
+    }
+
     const renderPage = function() {
         document.location.hash = `#page=${slide.index}`;
         renderPageIndicator();
         $("#display_view").firstChild.remove();
         $("#display_view").appendChild(slide.getCurrent());
-        
-        var size = 52;
-        const bodyEl = $("#display_view_container");
-        bodyEl.style['font-size'] = '1.6em';
-        while(detectOverflow()) {
-            size--;
-            bodyEl.style['font-size'] = `${size}px`;
-        }
-       
+        adjustSizeToFit();
+        setCurrentTheme();
     }
 
     slide.onCurrentChange = function() {
@@ -182,8 +178,96 @@ document.addEventListener('DOMContentLoaded', function(e){
     renderPage();
 
 
-  
+    const keyTable = {
+        'ArrowLeft' :()=> slide.previousSlide(),
+        'ArrowRight' :()=> slide.nextSlide(),
+        'KeyR': () => adjustSizeToFit(),
+        'KeyV': ()=> {
+            ++themeIndex;
+            setCurrentTheme();
+            
+        }
+    };
 
+    document.addEventListener('keydown', function(e){
+        console.log(e);
+        (keyTable[e.code] ?? function(){})();
+    }, false);
+
+
+    $("body").onresize = function() {
+        console.log(e);
+        adjustSizeToFit();
+    }
+
+    const openPresentation = window.openPresentation = function(stream) {
+        slide.pages = [];
+        slide.index = 0;
+
+        // area.value = e.target.result;
+        var title = undefined;
+        var author = undefined;
+        const STATE_TITLE = 1;
+        const STATE_AUTHOR = 2;
+        const STATE_SLIDE = 3;
+        const STATE_SLIDE_LINE = 4;
+        const STATE_SEEK = 0;
+
+        var lines = [];
+        var state = STATE_SEEK;
+
+        const flushLines = () => {
+            if (lines.length > 0) {
+                slide.add(new SlidePage({
+                    lines: lines
+                }));
+                lines = [];
+            }
+        }
+
+        stream.forEach(function(value){
+            switch(state) {
+                case STATE_SEEK:
+                    if (value.trim() == '[AUTHOR]') state = STATE_AUTHOR;
+                    if (value.trim() == '[TITLE]') state  = STATE_TITLE;
+                    if (value.trim() == '[SLIDE]') state = STATE_SLIDE;
+                    break;
+                case STATE_AUTHOR:
+                    author = value;
+                    state = STATE_SEEK;
+                    break
+                case STATE_TITLE:
+                    title = value;
+                    state = STATE_SEEK;
+                    break;
+                case STATE_SLIDE:
+                    console.log(title,author);
+                    slide.add(new CoverPage({
+                        title: title,
+                        author: author
+                    }));
+                    state = STATE_SLIDE_LINE;
+                case STATE_SLIDE_LINE:
+                    if(value.trim() == '') {
+                        flushLines();
+                    } else if(value[0] == '[' && value.trim() == '[NEW_SLIDE]') {
+                        flushLines();
+                        slide.add(new BlackPage());
+                        state = STATE_SEEK;
+                    } else {
+                        lines.push(value);
+                    }
+                    break;
+            }
+        });
+
+        flushLines();
+
+        slide.add(new BlackPage());
+
+        renderPage();
+        renderPageIndicator();
+    }
 
     //var area = document.getElementById("slg_source");
 
@@ -192,75 +276,7 @@ document.addEventListener('DOMContentLoaded', function(e){
         if (file == null) return;
         var reader = new FileReader();
         reader.onload = function(e){
-
-            slide.pages = [];
-            slide.index = 0;
-
-           // area.value = e.target.result;
-
-            var stream = e.target.result.split(/[\n]/);
-            var title = undefined;
-            var author = undefined;
-            const STATE_TITLE = 1;
-            const STATE_AUTHOR = 2;
-            const STATE_SLIDE = 3;
-            const STATE_SLIDE_LINE = 4;
-            const STATE_SEEK = 0;
-
-            var lines = [];
-            var state = STATE_SEEK;
-
-
-            const flushLines = () => {
-                if (lines.length > 0) {
-                    slide.add(new SlidePage({
-                        lines: lines
-                    }));
-                    lines = [];
-                }
-            }
-
-            stream.forEach(function(value){
-                switch(state) {
-                    case STATE_SEEK:
-                        if (value.trim() == '[AUTHOR]') state = STATE_AUTHOR;
-                        if (value.trim() == '[TITLE]') state  = STATE_TITLE;
-                        if (value.trim() == '[SLIDE]') state = STATE_SLIDE;
-                        break;
-                    case STATE_AUTHOR:
-                        author = value;
-                        state = STATE_SEEK;
-                        break
-                    case STATE_TITLE:
-                        title = value;
-                        state = STATE_SEEK;
-                        break;
-                    case STATE_SLIDE:
-                        console.log(title,author);
-                        slide.add(new CoverPage({
-                            title: title,
-                            author: author
-                        }));
-                        state = STATE_SLIDE_LINE;
-                    case STATE_SLIDE_LINE:
-                        if(value.trim() == '') {
-                            flushLines();
-                        } else if(value[0] == '[' && value.trim() == '[NEW_SLIDE]') {
-                            flushLines();
-                            slide.add(new BlackPage());
-                            state = STATE_SEEK;
-                        } else {
-                            lines.push(value);
-                        }
-                        break;
-                }
-            });
-            flushLines();
-
-            slide.add(new BlackPage());
-
-            renderPage();
-            renderPageIndicator();
+            openPresentation(e.target.result.split(/[\n]/));
         }
         reader.readAsText(file);
     }, false);

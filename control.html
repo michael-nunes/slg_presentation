@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Controller</title>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <input type="file" id="file-input" />
+        <script type="text/javascript">
+
+            var handler = window.open("index.html", null, "popup");
+
+            document.querySelector("#file-input").addEventListener('change', function(e){
+            var file = e.target.files[0];
+            if (file == null) return;
+            var reader = new FileReader();
+            reader.onload = function(e){
+                handler.parent.window.openPresentation(e.target.result.split(/[\n]/));
+                //openPresentation();
+            }
+            reader.readAsText(file);
+        }, false);
+
+        document.body.appendChild(handler.parent.querySelector("#display_view_container"));
+        </script>
+    </body>
+</html>
